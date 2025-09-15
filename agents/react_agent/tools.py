@@ -21,7 +21,7 @@ async def finance_research(ticker_symbol: str) -> Optional[list[dict[str, Any]]]
     return cast(list[dict[str, Any]], result)
 
 @tool   
-async def advanced_research_tool(query: str) -> Optional[list[dict[str, Any]]]:
+async def advanced_research(query: str) -> Optional[list[dict[str, Any]]]:
     """Perform in-depth research for blog content.
     
     This tool conducts comprehensive web searches with higher result limits and
@@ -37,7 +37,7 @@ async def advanced_research_tool(query: str) -> Optional[list[dict[str, Any]]]:
     return cast(list[dict[str, Any]], result)
 
 @tool
-async def basic_research_tool(query: str) -> Optional[list[dict[str, Any]]]:
+async def basic_research(query: str) -> Optional[list[dict[str, Any]]]:
     """Research trending topics for social media content.
     
     This tool performs quick searches optimized for trending and viral content,
@@ -65,10 +65,10 @@ def get_tools(selected_tools: list[str]) -> list[Callable[..., Any]]:
     for tool in selected_tools:
         if tool == "finance_research":
             tools.append(finance_research)
-        elif tool == "advanced_research_tool":
-            tools.append(advanced_research_tool)
-        elif tool == "basic_research_tool":
-            tools.append(basic_research_tool)
+        elif tool == "advanced_research":
+            tools.append(advanced_research)
+        elif tool == "basic_research":
+            tools.append(basic_research)
         elif tool == "get_todays_date":
             tools.append(get_todays_date)
     
