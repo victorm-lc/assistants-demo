@@ -9,24 +9,13 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "dotenv>=0.9.9",
-    "ipykernel>=6.30.0",
-    "jupyter>=1.1.1",
-    "langchain>=0.3.27",
-    "langchain-anthropic>=0.3.18",
-    "langchain-community>=0.3.27",
-    "langchain-core>=0.3.72",
-    "langchain-openai>=0.3.28",
-    "langchain-tavily>=0.2.11",
-    "langgraph>=0.6.1",
-    "langgraph-prebuilt>=0.6.2",
-    "langgraph-cli[inmem]>=0.3.6",
-    "langgraph-sdk>=0.2.0",
-    "langgraph-supervisor>=0.0.29",
-    "pydantic>=2.11.7",
-    "python-dotenv>=1.1.1",
-    "typing-extensions>=4.14.1",
-    "yfinance>=0.2.65",
+    "langchain>=1.0.0a10",
+    "langchain-anthropic>=1.0.0a1",
+    "langchain-community>=0.3.30",
+    "langchain-openai>=1.0.0a2",
+    "langgraph>=1.0.0a4",
+    "langgraph-supervisor>=0.0.28",
+    "yfinance>=0.2.66",
 ]
 
 [tool.setuptools.packages.find]

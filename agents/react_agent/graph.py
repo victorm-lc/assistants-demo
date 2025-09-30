@@ -3,35 +3,32 @@
 Add configuration and implement using a make_graph function to rebuild the graph at runtime.
 """
 from agents.react_agent.tools import get_tools
-from langgraph.prebuilt import create_react_agent
+from langchain.agents import create_agent
 from agents.utils import load_chat_model
 
-from agents.react_agent.configuration import Configuration
-from langchain_core.runnables import RunnableConfig
+from agents.react_agent.context import Context
+from langgraph.runtime import Runtime
 
 
 
-async def make_graph(config: RunnableConfig):
+async def make_graph(runtime: Runtime[Context]):
     
-    # Get name from config or use default
-    configurable = config.get("configurable", {})
-
     # get values from configuration
-    llm = configurable.get("model", "openai/gpt-4.1")
-    selected_tools = configurable.get("selected_tools", ["get_todays_date"])
-    prompt = configurable.get("system_prompt", "You are a helpful assistant.")
+    llm = runtime.context.model
+    selected_tools = runtime.context.selected_tools
+    prompt = runtime.context.system_prompt
     
     # specify the name for use in supervisor architecture
-    name = configurable.get("name", "react_agent")
+    agent_name = runtime.context.name
 
     # Compile the builder into an executable graph
     # You can customize this by adding interrupt points for state updates
-    graph = create_react_agent(
+    graph = create_agent(
         model=load_chat_model(llm), 
         tools=get_tools(selected_tools),
         prompt=prompt, 
-        config_schema=Configuration,
-        name=name
+        context_schema=Context,
+        name=agent_name
     )
 
     return graph

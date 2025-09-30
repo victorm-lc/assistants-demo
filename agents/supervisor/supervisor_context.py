@@ -5,7 +5,7 @@ from datetime import datetime
 
 today = datetime.now().strftime("%Y-%m-%d")
 
-class Configuration(BaseModel):
+class Context(BaseModel):
     """Unified configuration for the supervisor and all sub-agents."""
 
     # Supervisor config
@@ -40,17 +40,16 @@ Always be strategic about which agents to use and in what order to produce the b
     supervisor_model: Annotated[
         Literal[
             "anthropic/claude-sonnet-4-20250514",
-            "anthropic/claude-3-5-sonnet-latest",
-            "openai/gpt-4.1",
-            "openai/gpt-4.1-mini"
+            "anthropic/claude-sonnet-4-5-20250929",
+            "openai/gpt-5",
+            "openai/gpt-5-mini"
         ],
         {"__template_metadata__": {"kind": "llm"}},
     ] = Field(
-        default="openai/gpt-4.1",
+        default="openai/gpt-5",
         description="The name of the language model to use for the supervisor agent.",
         json_schema_extra={"langgraph_nodes": ["supervisor"]},
     )
-
     # Finance sub-agent config
     finance_system_prompt: str = Field(
         default=f"""today's date is {today}, You are an expert finance research assistant for a digital content agency.
@@ -66,13 +65,13 @@ When you are done with your research, return the research to the supervisor agen
     finance_model: Annotated[
         Literal[
             "anthropic/claude-sonnet-4-20250514",
-            "anthropic/claude-3-5-sonnet-latest",
-            "openai/gpt-4.1",
-            "openai/gpt-4.1-mini"
+            "anthropic/claude-sonnet-4-5-20250929",
+            "openai/gpt-5",
+            "openai/gpt-5-mini"
         ],
         {"__template_metadata__": {"kind": "llm"}},
     ] = Field(
-        default="openai/gpt-4.1",
+        default="openai/gpt-5",
         description="The name of the language model to use for the finance sub-agent.",
         json_schema_extra={"langgraph_nodes": ["finance_research_agent"]}
     )
@@ -94,13 +93,13 @@ agent. YOU MUST USE THE ADVANCED_RESEARCH_TOOL TO GET THE INFORMATION YOU NEED""
     research_model: Annotated[
         Literal[
             "anthropic/claude-sonnet-4-20250514",
-            "anthropic/claude-3-5-sonnet-latest",
-            "openai/gpt-4.1",
-            "openai/gpt-4.1-mini"
+            "anthropic/claude-sonnet-4-5-20250929",
+            "openai/gpt-5",
+            "openai/gpt-5-mini"
         ],
         {"__template_metadata__": {"kind": "llm"}},
     ] = Field(
-        default="openai/gpt-4.1",
+        default="openai/gpt-5",
         description="The name of the language model to use for the research sub-agent.",
         json_schema_extra={"langgraph_nodes": ["general_research_agent"]}
     )
@@ -122,13 +121,13 @@ final content based on the requested format for the user, then return the final 
     writing_model: Annotated[
         Literal[
             "anthropic/claude-sonnet-4-20250514",
-            "anthropic/claude-3-5-sonnet-latest",
-            "openai/gpt-4.1",
-            "openai/gpt-4.1-mini"
+            "anthropic/claude-sonnet-4-5-20250929",
+            "openai/gpt-5",
+            "openai/gpt-5-mini"
         ],
         {"__template_metadata__": {"kind": "llm"}},
     ] = Field(
-        default="openai/gpt-4.1",
+        default="openai/gpt-5",
         description="The name of the language model to use for the research sub-agent.",
         json_schema_extra={"langgraph_nodes": ["writing_agent"]}
     )
