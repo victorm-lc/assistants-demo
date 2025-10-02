@@ -15,14 +15,14 @@ class Context(BaseModel):
 
     model: Annotated[
             Literal[
-                "anthropic/claude-sonnet-4-20250514",
-                "anthropic/claude-sonnet-4-5-20250929",
-                "openai/gpt-5",
-                "openai/gpt-5-mini"
+                "anthropic:claude-sonnet-4-20250514",
+                "anthropic:claude-sonnet-4-5-20250929",
+                "openai:gpt-5",
+                "openai:gpt-5-mini"
             ],
             {"__template_metadata__": {"kind": "llm"}},
         ] = Field(
-            default="anthropic/claude-sonnet-4-5-20250929",
+            default="anthropic:claude-sonnet-4-5-20250929",
             description="The name of the language model to use for the agent's main interactions. "
         "Should be in the form: provider/model-name."
     )

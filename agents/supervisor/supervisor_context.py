@@ -1,4 +1,4 @@
-"""Define the configurable parameters for the agent."""
+"""Define the Context parameters for the agent."""
 from typing import Annotated, Literal
 from pydantic import BaseModel, Field
 from datetime import datetime
@@ -6,9 +6,12 @@ from datetime import datetime
 today = datetime.now().strftime("%Y-%m-%d")
 
 class Context(BaseModel):
-    """Unified configuration for the supervisor and all sub-agents."""
+    """Unified Context for the supervisor and all sub-agents.
+    
+    This Context is used to store the context for the supervisor and all sub-agents.
+    """
 
-    # Supervisor config
+    # Supervisor context
     supervisor_system_prompt: str = Field(
         default=f"""today's date is {today}
 
@@ -39,18 +42,18 @@ Always be strategic about which agents to use and in what order to produce the b
     )
     supervisor_model: Annotated[
         Literal[
-            "anthropic/claude-sonnet-4-20250514",
-            "anthropic/claude-sonnet-4-5-20250929",
-            "openai/gpt-5",
-            "openai/gpt-5-mini"
+            "anthropic:claude-sonnet-4-20250514",
+            "anthropic:claude-sonnet-4-5-20250929",
+            "openai:gpt-5",
+            "openai:gpt-5-mini"
         ],
         {"__template_metadata__": {"kind": "llm"}},
     ] = Field(
-        default="openai/gpt-5",
+        default="openai:gpt-5",
         description="The name of the language model to use for the supervisor agent.",
         json_schema_extra={"langgraph_nodes": ["supervisor"]},
     )
-    # Finance sub-agent config
+    # Finance sub-agent context
     finance_system_prompt: str = Field(
         default=f"""today's date is {today}, You are an expert finance research assistant for a digital content agency.
 You have access to the following tools: finance_research, basic_research, and get_todays_date. 
@@ -64,14 +67,14 @@ When you are done with your research, return the research to the supervisor agen
     )
     finance_model: Annotated[
         Literal[
-            "anthropic/claude-sonnet-4-20250514",
-            "anthropic/claude-sonnet-4-5-20250929",
-            "openai/gpt-5",
-            "openai/gpt-5-mini"
+            "anthropic:claude-sonnet-4-20250514",
+            "anthropic:claude-sonnet-4-5-20250929",
+            "openai:gpt-5",
+            "openai:gpt-5-mini"
         ],
         {"__template_metadata__": {"kind": "llm"}},
     ] = Field(
-        default="openai/gpt-5",
+        default="openai:gpt-5",
         description="The name of the language model to use for the finance sub-agent.",
         json_schema_extra={"langgraph_nodes": ["finance_research_agent"]}
     )
@@ -81,7 +84,7 @@ When you are done with your research, return the research to the supervisor agen
         json_schema_extra={"langgraph_nodes": ["finance_research_agent"]}
     )
 
-    # Research sub-agent config
+    # Research sub-agent context
     research_system_prompt: str = Field(
         default=f"""today's date is {today}, You are an expert general research agent. You have access to the following tools: 
 advanced_research_tool and get_todays_date. First get today's date then continue to use the advanced_research_tool tool to search 
@@ -92,14 +95,14 @@ agent. YOU MUST USE THE ADVANCED_RESEARCH_TOOL TO GET THE INFORMATION YOU NEED""
     )
     research_model: Annotated[
         Literal[
-            "anthropic/claude-sonnet-4-20250514",
-            "anthropic/claude-sonnet-4-5-20250929",
-            "openai/gpt-5",
-            "openai/gpt-5-mini"
+            "anthropic:claude-sonnet-4-20250514",
+            "anthropic:claude-sonnet-4-5-20250929",
+            "openai:gpt-5",
+            "openai:gpt-5-mini"
         ],
         {"__template_metadata__": {"kind": "llm"}},
     ] = Field(
-        default="openai/gpt-5",
+        default="openai:gpt-5",
         description="The name of the language model to use for the research sub-agent.",
         json_schema_extra={"langgraph_nodes": ["general_research_agent"]}
     )
@@ -109,7 +112,7 @@ agent. YOU MUST USE THE ADVANCED_RESEARCH_TOOL TO GET THE INFORMATION YOU NEED""
         json_schema_extra={"langgraph_nodes": ["general_research_agent"]}
     )
 
-    # Writing sub-agent config
+    # Writing sub-agent context
     writing_system_prompt: str = Field(
         default="""You are an expert writing assistant.
 Your primary responsibility is to help draft, edit, and improve written content to ensure clarity, 
@@ -120,14 +123,14 @@ final content based on the requested format for the user, then return the final 
     )
     writing_model: Annotated[
         Literal[
-            "anthropic/claude-sonnet-4-20250514",
-            "anthropic/claude-sonnet-4-5-20250929",
-            "openai/gpt-5",
-            "openai/gpt-5-mini"
+            "anthropic:claude-sonnet-4-20250514",
+            "anthropic:claude-sonnet-4-5-20250929",
+            "openai:gpt-5",
+            "openai:gpt-5-mini"
         ],
         {"__template_metadata__": {"kind": "llm"}},
     ] = Field(
-        default="openai/gpt-5",
+        default="openai:gpt-5",
         description="The name of the language model to use for the research sub-agent.",
         json_schema_extra={"langgraph_nodes": ["writing_agent"]}
     )

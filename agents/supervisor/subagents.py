@@ -7,16 +7,16 @@ from langgraph.runtime import Runtime
 async def create_subagents(runtime: Runtime[Context]):
     """Create all subagents using the make_graph pattern from react_agent."""
     
-    # get values from configuration
-    finance_model = runtime.context.finance_model
-    finance_system_prompt = runtime.context.finance_system_prompt
-    finance_tools = runtime.context.finance_tools
-    research_model = runtime.context.research_model
-    research_system_prompt = runtime.context.research_system_prompt
-    research_tools = runtime.context.research_tools
-    writing_model = runtime.context.writing_model
-    writing_system_prompt = runtime.context.writing_system_prompt
-    writing_tools = runtime.context.writing_tools
+    # get values from context
+    finance_model = runtime["finance_model"]
+    finance_system_prompt = runtime["finance_system_prompt"]
+    finance_tools = runtime["finance_tools"]
+    research_model = runtime["research_model"]
+    research_system_prompt = runtime["research_system_prompt"]
+    research_tools = runtime["research_tools"]
+    writing_model = runtime["writing_model"]
+    writing_system_prompt = runtime["writing_system_prompt"]
+    writing_tools = runtime["writing_tools"]
     
     # Create finance research agent using make_graph
     finance_context = Runtime(
