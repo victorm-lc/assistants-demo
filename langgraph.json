@@ -2,7 +2,9 @@
   "dependencies": ["."],
   "graphs": {
     "react_agent_no_context": "./agents/react_agent/graph_without_context.py:graph",
-    "react_agent": "./agents/react_agent/graph.py:make_graph"
+    "react_agent": "./agents/react_agent/graph.py:make_graph",
+    "supervisor_no_context": "./agents/supervisor/supervisor_no_context.py:supervisor_graph",
+    "supervisor_prebuilt": "./agents/supervisor/supervisor_prebuilt.py:make_supervisor_graph"
   },
   "env": ".env"
 }

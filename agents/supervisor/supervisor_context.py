@@ -78,8 +78,8 @@ When you are done with your research, return the research to the supervisor agen
         description="The name of the language model to use for the finance sub-agent.",
         json_schema_extra={"langgraph_nodes": ["finance_research_agent"]}
     )
-    finance_tools: list[Literal["finance_research", "advanced_research_tool", "basic_research_tool", "get_todays_date"]] = Field(
-        default = ["finance_research", "basic_research_tool", "get_todays_date"],
+    finance_tools: list[Literal["finance_research", "advanced_research", "basic_research", "get_todays_date"]] = Field(
+        default = ["finance_research", "basic_research", "get_todays_date"],
         description="The list of tools to make available to the finance sub-agent.",
         json_schema_extra={"langgraph_nodes": ["finance_research_agent"]}
     )
@@ -106,8 +106,8 @@ agent. YOU MUST USE THE ADVANCED_RESEARCH_TOOL TO GET THE INFORMATION YOU NEED""
         description="The name of the language model to use for the research sub-agent.",
         json_schema_extra={"langgraph_nodes": ["general_research_agent"]}
     )
-    research_tools: list[Literal["finance_research", "advanced_research_tool", "basic_research_tool", "get_todays_date"]] = Field(
-        default = ["advanced_research_tool", "get_todays_date"],
+    research_tools: list[Literal["finance_research", "advanced_research", "basic_research", "get_todays_date"]] = Field(
+        default = ["advanced_research", "get_todays_date"],
         description="The list of tools to make available to the general research sub-agent.",
         json_schema_extra={"langgraph_nodes": ["general_research_agent"]}
     )
@@ -134,8 +134,8 @@ final content based on the requested format for the user, then return the final 
         description="The name of the language model to use for the research sub-agent.",
         json_schema_extra={"langgraph_nodes": ["writing_agent"]}
     )
-    writing_tools: list[Literal["finance_research", "advanced_research_tool", "basic_research_tool", "get_todays_date"]] = Field(
-        default = ["advanced_research_tool", "get_todays_date"],
+    writing_tools: list[Literal["finance_research", "advanced_research", "basic_research", "get_todays_date"]] = Field(
+        default = ["basic_research", "get_todays_date"],
         description="The list of tools to make available to the general research sub-agent.",
         json_schema_extra={"langgraph_nodes": ["writing_agent"]}
     )

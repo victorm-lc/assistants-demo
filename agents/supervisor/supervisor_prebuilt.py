@@ -7,12 +7,13 @@ from langgraph_supervisor import create_supervisor
 
 # Main graph construction
 async def make_supervisor_graph(runtime: Runtime[Context]):
-    # Extract context values directly from the config
-    configurable = runtime.get("configurable", {})
-    supervisor_model = configurable.get("supervisor_model", "anthropic:claude-sonnet-4-5-20250929")
-    supervisor_system_prompt = configurable.get("supervisor_system_prompt", "You are a helpful AI assistant.")
     
-    # Create subagents using the new async function, passing configurable values
+    # Runtime is passed as a dict by the API, create Context from it (This will be fixed in the next release of langgraph-api)
+    context = Context(**runtime)
+    supervisor_model = context.supervisor_model
+    supervisor_system_prompt = context.supervisor_system_prompt
+    
+    # Create subagents using the new async function, passing runtime dict
     subagents = await create_subagents(runtime)
 
     # Create supervisor graph

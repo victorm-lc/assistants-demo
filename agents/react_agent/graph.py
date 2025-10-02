@@ -13,14 +13,14 @@ from langgraph.runtime import Runtime
 
 async def make_graph(runtime: Runtime[Context]):
     
-    # get values from context - they're in runtime['configurable'] in the prerelease
-    configurable = runtime.get("configurable", {})
-    llm = configurable.get("model", "anthropic:claude-sonnet-4-5-20250929")
-    selected_tools = configurable.get("selected_tools", ["get_todays_date"])
-    prompt = configurable.get("system_prompt", "You are a helpful AI assistant.")
+    # Runtime is passed as a dict by the API, create Context from it (This will be fixed in the next release of langgraph-api)
+    context = Context(**runtime)
+    llm = context.model
+    selected_tools = context.selected_tools
+    prompt = context.system_prompt
     
     # specify the name for use in supervisor architecture
-    agent_name = configurable.get("name", "react_agent")
+    agent_name = context.name
 
     # Compile the builder into an executable graph
     # You can customize this by adding interrupt points for state updates
