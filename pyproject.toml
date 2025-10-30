@@ -9,13 +9,13 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "langchain>=1.0.0a10",
-    "langchain-anthropic>=1.0.0a1",
-    "langchain-community>=0.3.30",
-    "langchain-openai>=1.0.0a2",
-    "langgraph>=1.0.0a4",
-    "langgraph-cli[inmem]>=0.4.2",
-    "langgraph-supervisor>=0.0.28",
+    "langchain>=1.0.3",
+    "langchain-anthropic>=1.0.0",
+    "langchain-community>=0.4.1",
+    "langchain-openai>=1.0.1",
+    "langgraph>=1.0.2",
+    "langgraph-cli[inmem]>=0.4.4",
+    "langgraph-supervisor>=0.0.30",
     "yfinance>=0.2.66",
 ]
 

@@ -15,6 +15,6 @@ prompt = """
 graph = create_agent(
     model=llm, 
     tools=tools, 
-    prompt=prompt,
+    system_prompt=prompt,
     name="react_agent"
 )

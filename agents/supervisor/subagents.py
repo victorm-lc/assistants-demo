@@ -1,4 +1,14 @@
-"""Create all subagents using the make_graph pattern from react_agent."""
+"""
+Create all subagents using the make_graph pattern from react_agent.
+
+NOTE: These subagents are used with create_supervisor, which is NOT the recommended pattern.
+
+RECOMMENDED: Wrap subagents as tools using the @tool decorator instead.
+See: https://docs.langchain.com/oss/python/langchain/multi-agent
+
+This approach is kept for easier visualization in LangGraph Studio.
+For production, use the tool calling pattern for better control flow and type safety.
+"""
 from agents.supervisor.supervisor_context import Context as SupervisorContext
 from agents.react_agent.context import Context as ReactContext
 
@@ -9,7 +19,7 @@ async def create_subagents(runtime: Runtime[SupervisorContext]):
     """Create all subagents using the make_graph pattern from react_agent."""
     
     # Runtime is passed as a dict by the API, create Context from it (This will be fixed in the next release of langgraph-api)
-    context = SupervisorContext(**runtime)
+    context = runtime.context
 
     # get values from context
     finance_model = context.finance_model

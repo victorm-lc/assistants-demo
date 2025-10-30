@@ -24,6 +24,41 @@ This demo showcases three approaches to agent configuration:
 - Each subagent uses the same configuration pattern
 - Shows how configuration scales to complex architectures
 
+> **⚠️ Note on Multi-Agent Pattern:** This demo uses `create_supervisor` for easier visualization in LangGraph Studio. However, **the recommended pattern for production** is to use [**subagents as tools**](https://docs.langchain.com/oss/python/langchain/multi-agent) (tool calling pattern), which provides better control flow and type safety. We're keeping `create_supervisor` in this demo until LangGraph Studio adds better support for visualizing subagent-as-tools architectures.
+
+## Multi-Agent Patterns
+
+### Recommended: Subagents as Tools
+
+The [**official LangChain multi-agent documentation**](https://docs.langchain.com/oss/python/langchain/multi-agent) recommends using the **tool calling pattern** where a supervisor agent calls other agents as tools. This provides:
+
+- ✅ **Centralized control flow**: All routing passes through the calling agent
+- ✅ **Better type safety**: Tools have explicit input/output schemas
+- ✅ **Cleaner context management**: Fine-grained control over what each agent sees
+- ✅ **Easier debugging**: Clear execution path through supervisor
+
+**Example of recommended pattern:**
+```python
+from langchain.tools import tool
+
+@tool("subagent_name", description="What this agent does")
+def call_subagent(query: str):
+    result = subagent.invoke({"messages": [{"role": "user", "content": query}]})
+    return result["messages"][-1].content
+
+supervisor = create_agent(model=model, tools=[call_subagent])
+```
+
+### Why This Demo Uses `create_supervisor`
+
+This repository currently uses `create_supervisor` instead of the recommended tool calling pattern because:
+
+1. **Better Studio visualization**: LangGraph Studio has excellent support for visualizing supervisor graphs
+2. **Clearer architecture**: Easier to see how agents interact in the UI
+3. **Educational clarity**: Simpler for learning multi-agent concepts
+
+**For production systems**, we recommend migrating to the tool calling pattern as shown in the [multi-agent documentation](https://docs.langchain.com/oss/python/langchain/multi-agent).
+
 ## What it demonstrates
 
 ### Configuration Evolution
@@ -257,6 +292,8 @@ Look at `agents/react_agent/graph.py` to see how runtime configuration is added 
 
 ### Scale to Multi-Agent Configuration
 Explore `agents/supervisor/` to see how the same runtime configuration patterns work with multiple specialized agents.
+
+> **Note:** The supervisor examples use `create_supervisor` for visualization purposes. See the [Multi-Agent Patterns](#multi-agent-patterns) section above for the recommended production approach using subagents as tools.
 
 ## Development
 

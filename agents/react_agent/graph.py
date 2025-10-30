@@ -14,7 +14,7 @@ from langgraph.runtime import Runtime
 async def make_graph(runtime: Runtime[Context]):
     
     # Runtime is passed as a dict by the API, create Context from it (This will be fixed in the next release of langgraph-api)
-    context = Context(**runtime)
+    context = runtime.context
     llm = context.model
     selected_tools = context.selected_tools
     prompt = context.system_prompt
@@ -27,7 +27,7 @@ async def make_graph(runtime: Runtime[Context]):
     graph = create_agent(
         model=init_chat_model(llm), 
         tools=get_tools(selected_tools),
-        prompt=prompt, 
+        system_prompt=prompt, 
         context_schema=Context,
         name=agent_name
     )
