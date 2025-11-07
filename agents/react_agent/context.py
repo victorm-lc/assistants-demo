@@ -15,8 +15,8 @@ class Context(BaseModel):
 
     model: Annotated[
             Literal[
-                "anthropic:claude-sonnet-4-20250514",
-                "anthropic:claude-sonnet-4-5-20250929",
+                "anthropic:claude-haiku-4-5",
+                "anthropic:claude-sonnet-4-5",
                 "openai:gpt-5",
                 "openai:gpt-5-mini"
             ],

@@ -42,14 +42,14 @@ Always be strategic about which agents to use and in what order to produce the b
     )
     supervisor_model: Annotated[
         Literal[
-            "anthropic:claude-sonnet-4-20250514",
-            "anthropic:claude-sonnet-4-5-20250929",
+            "anthropic:claude-haiku-4-5",
+            "anthropic:claude-sonnet-4-5",
             "openai:gpt-5",
             "openai:gpt-5-mini"
         ],
         {"__template_metadata__": {"kind": "llm"}},
     ] = Field(
-        default="openai:gpt-5",
+        default="anthropic:claude-haiku-4-5",
         description="The name of the language model to use for the supervisor agent.",
         json_schema_extra={"langgraph_nodes": ["supervisor"]},
     )
@@ -67,14 +67,14 @@ When you are done with your research, return the research to the supervisor agen
     )
     finance_model: Annotated[
         Literal[
-            "anthropic:claude-sonnet-4-20250514",
-            "anthropic:claude-sonnet-4-5-20250929",
+            "anthropic:claude-haiku-4-5",
+            "anthropic:claude-sonnet-4-5",
             "openai:gpt-5",
             "openai:gpt-5-mini"
         ],
         {"__template_metadata__": {"kind": "llm"}},
     ] = Field(
-        default="openai:gpt-5",
+        default="anthropic:claude-haiku-4-5",
         description="The name of the language model to use for the finance sub-agent.",
         json_schema_extra={"langgraph_nodes": ["finance_research_agent"]}
     )
@@ -95,14 +95,14 @@ agent. YOU MUST USE THE ADVANCED_RESEARCH_TOOL TO GET THE INFORMATION YOU NEED""
     )
     research_model: Annotated[
         Literal[
-            "anthropic:claude-sonnet-4-20250514",
-            "anthropic:claude-sonnet-4-5-20250929",
+            "anthropic:claude-haiku-4-5",
+            "anthropic:claude-sonnet-4-5",
             "openai:gpt-5",
             "openai:gpt-5-mini"
         ],
         {"__template_metadata__": {"kind": "llm"}},
     ] = Field(
-        default="openai:gpt-5",
+        default="anthropic:claude-haiku-4-5",
         description="The name of the language model to use for the research sub-agent.",
         json_schema_extra={"langgraph_nodes": ["general_research_agent"]}
     )
@@ -123,14 +123,14 @@ final content based on the requested format for the user, then return the final 
     )
     writing_model: Annotated[
         Literal[
-            "anthropic:claude-sonnet-4-20250514",
-            "anthropic:claude-sonnet-4-5-20250929",
+            "anthropic:claude-haiku-4-5",
+            "anthropic:claude-sonnet-4-5",
             "openai:gpt-5",
             "openai:gpt-5-mini"
         ],
         {"__template_metadata__": {"kind": "llm"}},
     ] = Field(
-        default="openai:gpt-5",
+        default="anthropic:claude-haiku-4-5",
         description="The name of the language model to use for the research sub-agent.",
         json_schema_extra={"langgraph_nodes": ["writing_agent"]}
     )
