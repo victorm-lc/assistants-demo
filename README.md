@@ -17,7 +17,7 @@ This demo showcases three approaches to agent configuration:
 ### 2. **Single Agent Configuration** (`agents/react_agent/graph.py`)
 - Dynamic runtime configuration via `Runtime[Context]`
 - Configurable models, prompts, and tools
-- Clean `runtime.context` pattern
+- Uses `runtime.get("configurable")` pattern (temporary workaround)
 
 ### 3. **Multi-Agent Configuration** (`agents/supervisor/`)
 - Supervisor orchestrating multiple configured agents
@@ -68,8 +68,9 @@ This repository currently uses `create_supervisor` instead of the recommended to
 
 ### Key Configuration Patterns
 - **Context schemas**: Typed classes (Pydantic, TypedDict, dataclass, etc.) define available configuration options
-- **Runtime parameter**: `runtime: Runtime[Context]` provides typed access
-- **Direct access**: `runtime.context` for typed configuration values
+- **Runtime parameter**: `runtime: Runtime[Context]` provides typed access (coming soon in API)
+- **Current workaround**: Use `runtime.get("configurable", {})` to access configuration dict
+- **Future pattern**: Direct `runtime.context` access for typed configuration values
 - **Default values**: Defined in your chosen schema type (e.g., Pydantic Fields, dataclass defaults)
 - **Reusable functions**: Same `make_graph(runtime)` pattern everywhere
 
@@ -111,16 +112,20 @@ class Context(BaseModel):
     system_prompt: str = Field(default="You are a helpful assistant.")
 
 async def make_graph(runtime: Runtime[Context]):
+    # Temporary workaround: extract configurable dict from runtime
+    # (runtime.context access coming soon in future API update)
+    configurable = runtime.get("configurable", {})
     
     graph = create_agent(
-      # Access typed configuration via runtime.context
-        model=init_chat_model(runtime.context.model), 
-        tools=get_tools(runtime.context.selected_tools),
-        prompt=runtime.context.system_prompt,
+        model=init_chat_model(configurable.get("model", "openai:gpt-4")), 
+        tools=get_tools(configurable.get("selected_tools", ["get_todays_date"])),
+        prompt=configurable.get("system_prompt", "You are a helpful assistant."),
         context_schema=Context
     )
     return graph
 ```
+
+> **⚠️ Note on Context Access:** The `runtime.context` pattern isn't accessible in functions quite yet, but **is coming in a future API update**. That will be the recommended pattern for rebuilding graphs at runtime using typed context. Today we use a slight workaround by extracting the configurable dict with `runtime.get("configurable", {})` and providing default values.
 
 **Note on Agent Creation:** The video used `create_react_agent` from `langgraph.prebuilt`. This has been **replaced with `create_agent`** from `langchain.agents` as part of LangGraph V1's consolidation of agent functionality into the LangChain library.
 
@@ -135,16 +140,18 @@ async def make_graph(runtime: Runtime[Context]):
 | **Import** | `from langgraph.prebuilt` | `from langchain.agents` |
 | **Schema Definition** | Optional `Configuration` class | Required `Context` class (examples use Pydantic) |
 | **Schema Usage** | Optional `config_schema` param | Required `context_schema` param |
-| **Access** | `config.get("configurable", {})` | `runtime.context` |
-| **Type Safety** | Runtime checks | Compile-time type hints |
+| **Access** | `config.get("configurable", {})` | `runtime.get("configurable", {})` (temp workaround) |
+| **Future Access** | N/A | `runtime.context` (coming soon) |
+| **Type Safety** | Runtime checks | Compile-time type hints via Context schemas |
 
 ### Why the Change?
 
 LangGraph V1 introduced stronger typing and cleaner APIs:
-- ✅ **Better IDE support** - autocomplete and type hints with typed `runtime.context`
-- ✅ **Type safety** - catch configuration errors at compile time
+- ✅ **Better IDE support** - autocomplete and type hints with typed Context schemas
+- ✅ **Type safety** - catch configuration errors with explicit Context definitions
 - ✅ **Clearer APIs** - explicit context schemas define available options
 - ✅ **Flexibility** - use Pydantic, TypedDict, dataclass, or any typed class
+- ✅ **Future ready** - positioned for `runtime.context` direct access when API is updated
 
 The **core concepts from the video remain valid** - the way you think about configuring agents and building supervisor architectures hasn't changed, just the implementation details.
 
@@ -157,18 +164,19 @@ from pydantic import BaseModel, Field
 
 # Define Context schema (using Pydantic in this example)
 class Context(BaseModel):
-    model: str = Field(default="anthropic/claude-sonnet-4-5-20250929")
+    model: str = Field(default="anthropic:claude-haiku-4-5")
     system_prompt: str = Field(default="You are a helpful AI assistant.")
     selected_tools: list[str] = Field(default=["get_todays_date"])
 
 async def make_graph(runtime: Runtime[Context]):
-    # Access typed configuration from runtime
-    context = runtime.context
+    # Current workaround: extract configurable dict
+    # Future: runtime.context will provide typed access
+    configurable = runtime.get("configurable", {})
     
     return create_agent(
-        model=init_chat_model(context.model), 
-        tools=get_tools(context.selected_tools), 
-        prompt=context.system_prompt,
+        model=init_chat_model(configurable.get("model", "anthropic:claude-haiku-4-5")), 
+        tools=get_tools(configurable.get("selected_tools", ["get_todays_date"])), 
+        prompt=configurable.get("system_prompt", "You are a helpful AI assistant."),
         context_schema=Context
     )
 ```
@@ -176,30 +184,31 @@ async def make_graph(runtime: Runtime[Context]):
 ### Multi-Agent Configuration
 ```python
 async def create_subagents(runtime: Runtime[SupervisorContext]):
-    # Access supervisor configuration
-    context = runtime.context
+    # Current workaround: extract configurable dict
+    configurable = runtime.get("configurable", {})
     
     # Create subagents with their own configurations
-    finance_agent = await make_graph(
-        Runtime(context=ReactContext(
-            model=context.finance_model,
-            system_prompt=context.finance_system_prompt,
-            selected_tools=context.finance_tools
-        ))
-    )
+    finance_agent = await make_graph({
+        "configurable": {
+            "model": configurable.get("finance_model", "anthropic:claude-haiku-4-5"),
+            "system_prompt": configurable.get("finance_system_prompt", "You are a financial research assistant."),
+            "selected_tools": configurable.get("finance_tools", ["finance_research", "basic_research", "get_todays_date"])
+        }
+    })
     # ... more agents using same pattern
 ```
 
 ## Why This Approach?
 
 ### ✅ **Type Safety**
-- IDE autocomplete and type hints with `runtime.context`
+- IDE autocomplete and type hints with typed Context schemas
 - Compile-time type checking with typed Context objects
 - Optional validation with Pydantic if desired
+- Future: Direct `runtime.context` access (coming soon)
 
 ### ✅ **Simplicity**
 - Clean Context schemas define available configuration options
-- Direct access via `runtime.context`
+- Straightforward configuration extraction pattern
 - Easy to understand and modify
 
 ### ✅ **Consistency** 
@@ -318,6 +327,8 @@ You can find the latest LangChain, LangGraph and LangSmith documentation [here](
 
 ## About This Repository
 
-This repository demonstrates configuration patterns for **LangGraph V1** (October 2024). It has been updated from the original YouTube video version to use the new `Runtime[Context]` pattern with typed context schemas (using Pydantic in the examples) and `runtime.context` access, which provides better type safety and IDE support while maintaining the same core architectural concepts.
+This repository demonstrates configuration patterns for **LangGraph V1** (October 2024). It has been updated from the original YouTube video version to use the new `Runtime[Context]` pattern with typed context schemas (using Pydantic in the examples).
 
-The migration from `RunnableConfig` → `Runtime[Context]` represents LangGraph's evolution toward stronger typing and better developer experience, coordinated with the LangChain ecosystem. Note that while this repository uses Pydantic for context schemas, you can use TypedDict, dataclass, or any typed class.
+**Current Implementation Note:** The code uses `runtime.get("configurable", {})` as a temporary workaround to access configuration values. The recommended `runtime.context` pattern for direct typed access is coming in a future API update and will be the standard way to rebuild graphs at runtime using typed context.
+
+The migration from `RunnableConfig` → `Runtime[Context]` represents LangGraph's evolution toward stronger typing and better developer experience. Note that while this repository uses Pydantic for context schemas, you can use TypedDict, dataclass, or any typed class.
