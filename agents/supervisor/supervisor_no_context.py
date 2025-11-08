@@ -1,6 +1,20 @@
-from langgraph.prebuilt import create_react_agent
+"""
+NOTE: This file uses create_supervisor, which is NO LONGER the recommended pattern for multi-agent systems.
+
+RECOMMENDED PATTERN: Use subagents as tools (tool calling pattern)
+See: https://docs.langchain.com/oss/python/langchain/multi-agent
+
+Why we're still using create_supervisor here:
+- Easier visualization in LangGraph Studio
+- Simpler to understand the supervisor architecture
+- Better Studio support for this pattern (subagent-as-tools visualization coming soon)
+
+For production systems, prefer wrapping subagents as tools for better control flow and type safety.
+"""
+
+from langchain.agents import create_agent
 from agents.react_agent.tools import finance_research, basic_research, advanced_research, get_todays_date
-from langchain_openai import ChatOpenAI
+from langchain.chat_models import init_chat_model
 
 from langgraph_supervisor import create_supervisor
 
@@ -14,13 +28,13 @@ The basic_research tool is used to search for general information.
 The get_todays_date tool is used to get today's date. 
 When you are done with your research, return the research to the supervisor agent."""
 
-finance_model = ChatOpenAI(model="gpt-4o")
+finance_model = init_chat_model("openai:gpt-5-mini")
 finance_tools = [finance_research, basic_research, get_todays_date]
 
-finance_agent = create_react_agent(
+finance_agent = create_agent(
     model=finance_model,
     tools=finance_tools,
-    prompt=finance_system_prompt,
+    system_prompt=finance_system_prompt,
     name="finance_research_agent"
 )
 
@@ -30,13 +44,13 @@ advanced_research_tool and get_todays_date. First get today's date then continue
 for general information on the topic you are given to research, when your done you return the research to the supervisor 
 agent. YOU MUST USE THE ADVANCED_RESEARCH_TOOL TO GET THE INFORMATION YOU NEED"""
 
-research_model = ChatOpenAI(model="gpt-4o")
+research_model = init_chat_model("openai:gpt-5-mini")
 research_tools = [advanced_research, get_todays_date]
 
-research_agent = create_react_agent(
+research_agent = create_agent(
     model=research_model,
     tools=research_tools,
-    prompt=research_system_prompt,
+    system_prompt=research_system_prompt,
     name="general_research_agent"
 )
 
@@ -57,7 +71,7 @@ Your process:
 
 Always be strategic about which agents to use and in what order to produce the best possible content."""
 
-supervisor_model = ChatOpenAI(model="gpt-4o")
+supervisor_model = init_chat_model("openai:gpt-5-mini")
 
 supervisor_graph = create_supervisor(
         agents=[finance_agent, research_agent],

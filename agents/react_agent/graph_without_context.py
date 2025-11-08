@@ -1,9 +1,9 @@
 from agents.react_agent.tools import basic_research, get_todays_date
-from langgraph.prebuilt import create_react_agent
-from langchain_openai import ChatOpenAI
+from langchain.agents import create_agent
+from langchain.chat_models import init_chat_model
 
 # initialize our model and tools    
-llm = ChatOpenAI(model="gpt-4o")
+llm = init_chat_model(model="anthropic:claude-haiku-4-5")
 tools = [basic_research, get_todays_date]
 prompt = """
     You are a helpful AI assistant trained in creating engaging social media content!
@@ -12,9 +12,9 @@ prompt = """
 """
 
 # Compile the builder into an executable graph
-graph = create_react_agent(
+graph = create_agent(
     model=llm, 
     tools=tools, 
-    prompt=prompt,
+    system_prompt=prompt,
     name="react_agent"
 )

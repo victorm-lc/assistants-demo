@@ -2,6 +2,9 @@
 
 It includes tools for general search, finance research, blog research, social media research.
 
+Tools should have a well thought out doc string to describe the tool and its usage, so that your agent
+can understand how to use the tool and what it is for.
+
 These tools are intended as free examples to get started. For production use,
 consider implementing more robust and specialized tools tailored to your needs.
 """
@@ -15,18 +18,23 @@ from datetime import datetime
 
 @tool
 async def finance_research(ticker_symbol: str) -> Optional[list[dict[str, Any]]]:
-    """Search for finance research, must be a ticker symbol."""
+    """Search for finance research, must be a ticker symbol. This tool is used to search for financial data and news from Yahoo Finance.
+    It will return related finincial news from Yahoo Finance for that given ticker symbol.
+    
+    Args:
+        ticker_symbol (str): The ticker symbol of the company to research.
+    """
     wrapped = YahooFinanceNewsTool()
     result = await wrapped.ainvoke({"query": ticker_symbol})
     return cast(list[dict[str, Any]], result)
 
 @tool   
 async def advanced_research(query: str) -> Optional[list[dict[str, Any]]]:
-    """Perform in-depth research for blog content.
-    
-    This tool conducts comprehensive web searches with higher result limits and
-    deeper analysis, ideal for creating well-researched blog posts backed by
-    authoritative sources.
+    """Perform in-depth research with more results and deeper analysis. This tool
+    will return 10 results and go deeper for more information.
+
+    Args:
+        query (str): The query to search for.
     """
     # Using Tavily with higher result count for more comprehensive research
     wrapped = TavilySearchResults(
@@ -38,10 +46,11 @@ async def advanced_research(query: str) -> Optional[list[dict[str, Any]]]:
 
 @tool
 async def basic_research(query: str) -> Optional[list[dict[str, Any]]]:
-    """Research trending topics for social media content.
-    
-    This tool performs quick searches optimized for trending and viral content,
-    returning concise results ideal for social media post creation.
+    """This tool performs quick searches with little depth,
+    returning concise results ideal for basic research or quick queries.
+
+    Args:
+        query (str): The query to search for.
     """
     # Using Tavily with lower result count and quicker search for social content
     wrapped = TavilySearchResults(
@@ -55,7 +64,9 @@ async def basic_research(query: str) -> Optional[list[dict[str, Any]]]:
 
 @tool
 async def get_todays_date() -> str:
-    """Get the current date."""
+    """Quick tool to get today's date.
+    Args: None
+    """
     return datetime.now().strftime("%Y-%m-%d")
 
 

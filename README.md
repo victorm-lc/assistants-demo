@@ -1,26 +1,63 @@
 # LangGraph Configuration Patterns Demo
 
-This project demonstrates **how to implement configuration patterns** in ReAct Agents and supervisor-style architectures using [LangGraph](https://github.com/langchain-ai/langgraph). It shows the progression from hardcoded agents to flexible, configurable systems.
+> **📹 Coming from the YouTube video?** This repository has been **updated for LangGraph V1** (released October 2025). The core concepts remain the same, but the implementation has changed to use the new `Runtime[Context]` pattern instead of `RunnableConfig`. See the [Migration Guide](#migration-from-video-to-current-version) section below for details on what changed.
+
+This project demonstrates **how to implement runtime configuration patterns** in ReAct Agents and supervisor-style architectures using [LangGraph](https://docs.langchain.com/). It shows the progression from hardcoded agents to flexible, configurable systems.
 
 
 ## Configuration Pattern Progression
 
 This demo showcases three approaches to agent configuration:
 
-### 1. **No Configuration** (`agents/react_agent/graph_without_config.py`)
+### 1. **No Configuration** (`agents/react_agent/graph_without_context.py`)
 - Hardcoded ReAct agent
 - Fixed model, prompt, and tools
 - Simple but inflexible
 
 ### 2. **Single Agent Configuration** (`agents/react_agent/graph.py`)
-- Dynamic configuration via `RunnableConfig`
+- Dynamic runtime configuration via `Runtime[Context]`
 - Configurable models, prompts, and tools
-- Clean `config.get("configurable", {})` pattern
+- Uses `runtime.get("configurable")` pattern (temporary workaround)
 
 ### 3. **Multi-Agent Configuration** (`agents/supervisor/`)
 - Supervisor orchestrating multiple configured agents
 - Each subagent uses the same configuration pattern
 - Shows how configuration scales to complex architectures
+
+> **⚠️ Note on Multi-Agent Pattern:** This demo uses `create_supervisor` for easier visualization in LangGraph Studio. However, **the recommended pattern for production** is to use [**subagents as tools**](https://docs.langchain.com/oss/python/langchain/multi-agent) (tool calling pattern), which provides better control flow and type safety. We're keeping `create_supervisor` in this demo until LangGraph Studio adds better support for visualizing subagent-as-tools architectures.
+
+## Multi-Agent Patterns
+
+### Recommended: Subagents as Tools
+
+The [**official LangChain multi-agent documentation**](https://docs.langchain.com/oss/python/langchain/multi-agent) recommends using the **tool calling pattern** where a supervisor agent calls other agents as tools. This provides:
+
+- ✅ **Centralized control flow**: All routing passes through the calling agent
+- ✅ **Better type safety**: Tools have explicit input/output schemas
+- ✅ **Cleaner context management**: Fine-grained control over what each agent sees
+- ✅ **Easier debugging**: Clear execution path through supervisor
+
+**Example of recommended pattern:**
+```python
+from langchain.tools import tool
+
+@tool("subagent_name", description="What this agent does")
+def call_subagent(query: str):
+    result = subagent.invoke({"messages": [{"role": "user", "content": query}]})
+    return result["messages"][-1].content
+
+supervisor = create_agent(model=model, tools=[call_subagent])
+```
+
+### Why This Demo Uses `create_supervisor`
+
+This repository currently uses `create_supervisor` instead of the recommended tool calling pattern because:
+
+1. **Better Studio visualization**: LangGraph Studio has excellent support for visualizing supervisor graphs
+2. **Clearer architecture**: Easier to see how agents interact in the UI
+3. **Educational clarity**: Simpler for learning multi-agent concepts
+
+**For production systems**, we recommend migrating to the tool calling pattern as shown in the [multi-agent documentation](https://docs.langchain.com/oss/python/langchain/multi-agent).
 
 ## What it demonstrates
 
@@ -30,49 +67,148 @@ This demo showcases three approaches to agent configuration:
 3. **Scale complexity**: Same configuration patterns across multiple agents
 
 ### Key Configuration Patterns
-- **Direct extraction**: `configurable = config.get("configurable", {})`
-- **Default values**: `configurable.get("model", "default-model")`
-- **Reusable functions**: Same `make_graph(config)` pattern everywhere
-- **Simplified approach**: No complex configuration classes needed
+- **Context schemas**: Typed classes (Pydantic, TypedDict, dataclass, etc.) define available configuration options
+- **Runtime parameter**: `runtime: Runtime[Context]` provides typed access (coming soon in API)
+- **Current workaround**: Use `runtime.get("configurable", {})` to access configuration dict
+- **Future pattern**: Direct `runtime.context` access for typed configuration values
+- **Default values**: Defined in your chosen schema type (e.g., Pydantic Fields, dataclass defaults)
+- **Reusable functions**: Same `make_graph(runtime)` pattern everywhere
+
+## Migration from Video to Current Version
+
+If you're coming from the YouTube video (recorded Jul 2, 2025), here are the key changes:
+
+### What Changed in LangGraph V1
+
+**Old Pattern (from video):**
+```python
+from langchain_core.runnables import RunnableConfig
+from langgraph.prebuilt import create_react_agent
+
+async def make_graph(config: RunnableConfig):
+    configurable = config.get("configurable", {})
+    llm = configurable.get("model", "openai/gpt-4")
+    selected_tools = configurable.get("selected_tools", ["get_todays_date"])
+    prompt = configurable.get("system_prompt", "You are a helpful assistant.")
+    
+    graph = create_react_agent(
+        model=load_chat_model(llm), 
+        tools=get_tools(selected_tools),
+        prompt=prompt
+    )
+    return graph
+```
+
+**New Pattern (current):**
+```python
+from langgraph.runtime import Runtime
+from pydantic import BaseModel, Field
+from langchain.agents import create_agent
+
+# Define Context schema (this example uses Pydantic, but TypedDict, dataclass, etc. also work)
+class Context(BaseModel):
+    model: str = Field(default="openai:gpt-4")
+    selected_tools: list[str] = Field(default=["get_todays_date"])
+    system_prompt: str = Field(default="You are a helpful assistant.")
+
+async def make_graph(runtime: Runtime[Context]):
+    # Temporary workaround: extract configurable dict from runtime
+    # (runtime.context access coming soon in future API update)
+    configurable = runtime.get("configurable", {})
+    
+    graph = create_agent(
+        model=init_chat_model(configurable.get("model", "openai:gpt-4")), 
+        tools=get_tools(configurable.get("selected_tools", ["get_todays_date"])),
+        prompt=configurable.get("system_prompt", "You are a helpful assistant."),
+        context_schema=Context
+    )
+    return graph
+```
+
+> **⚠️ Note on Context Access:** The `runtime.context` pattern isn't accessible in functions quite yet, but **is coming in a future API update**. That will be the recommended pattern for rebuilding graphs at runtime using typed context. Today we use a slight workaround by extracting the configurable dict with `runtime.get("configurable", {})` and providing default values.
+
+**Note on Agent Creation:** The video used `create_react_agent` from `langgraph.prebuilt`. This has been **replaced with `create_agent`** from `langchain.agents` as part of LangGraph V1's consolidation of agent functionality into the LangChain library.
+
+**Note on Model Loading:** The video used a custom `load_chat_model()` helper function with `provider/model` format (e.g., `"openai/gpt-4"`). This has been replaced with direct use of `init_chat_model()` which now supports `provider:model` format (e.g., `"openai:gpt-5"`), eliminating the need for the helper function.
+
+### Key Differences
+
+| Aspect | Old (Video) | New (Current) |
+|--------|-------------|---------------|
+| **Config Type** | `RunnableConfig` (dict-based) | `Runtime[Context]` (typed object) |
+| **Function** | `create_react_agent` | `create_agent` |
+| **Import** | `from langgraph.prebuilt` | `from langchain.agents` |
+| **Schema Definition** | Optional `Configuration` class | Required `Context` class (examples use Pydantic) |
+| **Schema Usage** | Optional `config_schema` param | Required `context_schema` param |
+| **Access** | `config.get("configurable", {})` | `runtime.get("configurable", {})` (temp workaround) |
+| **Future Access** | N/A | `runtime.context` (coming soon) |
+| **Type Safety** | Runtime checks | Compile-time type hints via Context schemas |
+
+### Why the Change?
+
+LangGraph V1 introduced stronger typing and cleaner APIs:
+- ✅ **Better IDE support** - autocomplete and type hints with typed Context schemas
+- ✅ **Type safety** - catch configuration errors with explicit Context definitions
+- ✅ **Clearer APIs** - explicit context schemas define available options
+- ✅ **Flexibility** - use Pydantic, TypedDict, dataclass, or any typed class
+- ✅ **Future ready** - positioned for `runtime.context` direct access when API is updated
+
+The **core concepts from the video remain valid** - the way you think about configuring agents and building supervisor architectures hasn't changed, just the implementation details.
 
 ## Configuration in Action
 
 ### Single Agent Configuration
 ```python
-async def make_graph(config: RunnableConfig):
-    # Extract configuration values directly
-    configurable = config.get("configurable", {})
-    model = configurable.get("model", "anthropic/claude-3-5-sonnet-latest")
-    system_prompt = configurable.get("system_prompt", "You are a helpful AI assistant.")
-    selected_tools = configurable.get("selected_tools", ["get_todays_date"])
+from langgraph.runtime import Runtime
+from pydantic import BaseModel, Field
+
+# Define Context schema (using Pydantic in this example)
+class Context(BaseModel):
+    model: str = Field(default="anthropic:claude-haiku-4-5")
+    system_prompt: str = Field(default="You are a helpful AI assistant.")
+    selected_tools: list[str] = Field(default=["get_todays_date"])
+
+async def make_graph(runtime: Runtime[Context]):
+    # Current workaround: extract configurable dict
+    # Future: runtime.context will provide typed access
+    configurable = runtime.get("configurable", {})
     
-    # Use the configuration
-    llm = load_chat_model(model)
-    tools = get_tools(config)
-    
-    return create_react_agent(model=llm, tools=tools, prompt=system_prompt)
+    return create_agent(
+        model=init_chat_model(configurable.get("model", "anthropic:claude-haiku-4-5")), 
+        tools=get_tools(configurable.get("selected_tools", ["get_todays_date"])), 
+        prompt=configurable.get("system_prompt", "You are a helpful AI assistant."),
+        context_schema=Context
+    )
 ```
 
 ### Multi-Agent Configuration
 ```python
-async def create_subagents():
-    # Each subagent gets its own configuration
-    finance_config = RunnableConfig(
-        configurable={
-            "model": supervisor_config.finance_model,
-            "system_prompt": supervisor_config.finance_system_prompt,
-            "selected_tools": supervisor_config.finance_tools
+async def create_subagents(runtime: Runtime[SupervisorContext]):
+    # Current workaround: extract configurable dict
+    configurable = runtime.get("configurable", {})
+    
+    # Create subagents with their own configurations
+    finance_agent = await make_graph({
+        "configurable": {
+            "model": configurable.get("finance_model", "anthropic:claude-haiku-4-5"),
+            "system_prompt": configurable.get("finance_system_prompt", "You are a financial research assistant."),
+            "selected_tools": configurable.get("finance_tools", ["finance_research", "basic_research", "get_todays_date"])
         }
-    )
-    finance_agent = await make_graph(finance_config)
+    })
     # ... more agents using same pattern
 ```
 
 ## Why This Approach?
 
+### ✅ **Type Safety**
+- IDE autocomplete and type hints with typed Context schemas
+- Compile-time type checking with typed Context objects
+- Optional validation with Pydantic if desired
+- Future: Direct `runtime.context` access (coming soon)
+
 ### ✅ **Simplicity**
-- No complex configuration classes
-- Direct dictionary access
+- Clean Context schemas define available configuration options
+- Straightforward configuration extraction pattern
 - Easy to understand and modify
 
 ### ✅ **Consistency** 
@@ -158,13 +294,15 @@ End setup instructions
 ## Exploring the Configuration Patterns
 
 ### Start with No Configuration
-Examine `agents/react_agent/graph_without_config.py` to see the hardcoded baseline.
+Examine `agents/react_agent/graph_without_context.py` to see the hardcoded baseline.
 
 ### Add Single Agent Configuration  
-Look at `agents/react_agent/graph.py` to see how configuration is added while keeping the code simple.
+Look at `agents/react_agent/graph.py` to see how runtime configuration is added while keeping the code simple.
 
 ### Scale to Multi-Agent Configuration
-Explore `agents/supervisor/` to see how the same configuration patterns work with multiple specialized agents.
+Explore `agents/supervisor/` to see how the same runtime configuration patterns work with multiple specialized agents.
+
+> **Note:** The supervisor examples use `create_supervisor` for visualization purposes. See the [Multi-Agent Patterns](#multi-agent-patterns) section above for the recommended production approach using subagents as tools.
 
 ## Development
 
@@ -185,151 +323,12 @@ While iterating on your configuration:
 
 ## Documentation
 
-You can find the latest LangGraph documentation [here](https://github.com/langchain-ai/langgraph), including examples and references for configuration patterns.
+You can find the latest LangChain, LangGraph and LangSmith documentation [here](https://docs.langchain.com/), including examples and references for configuration patterns.
 
-LangGraph Studio integrates with [LangSmith](https://smith.langchain.com/) for comprehensive tracing and team collaboration.
+## About This Repository
 
-## Configuration Philosophy
+This repository demonstrates configuration patterns for **LangGraph V1** (October 2024). It has been updated from the original YouTube video version to use the new `Runtime[Context]` pattern with typed context schemas (using Pydantic in the examples).
 
-This demo shows that **good configuration doesn't have to be complex**:
-- Start with hardcoded values for rapid prototyping
-- Add simple dictionary-based configuration for flexibility
-- Scale the same patterns to multi-agent architectures
-- Keep it simple - avoid over-engineering configuration systems
+**Current Implementation Note:** The code uses `runtime.get("configurable", {})` as a temporary workaround to access configuration values. The recommended `runtime.context` pattern for direct typed access is coming in a future API update and will be the standard way to rebuild graphs at runtime using typed context.
 
-Perfect for learning how to build configurable AI systems that remain maintainable as they grow!
-
-<!--
-Configuration auto-generated by `langgraph template lock`. DO NOT EDIT MANUALLY.
-{
-  "config_schemas": {
-    "agent": {
-      "type": "object",
-      "properties": {
-        "model": {
-          "type": "string",
-          "default": "anthropic/claude-3-5-sonnet-20240620",
-          "description": "The name of the language model to use for the agent's main interactions. Should be in the form: provider/model-name.",
-          "environment": [
-            {
-              "value": "anthropic/claude-1.2",
-              "variables": "ANTHROPIC_API_KEY"
-            },
-            {
-              "value": "anthropic/claude-2.0",
-              "variables": "ANTHROPIC_API_KEY"
-            },
-            {
-              "value": "anthropic/claude-2.1",
-              "variables": "ANTHROPIC_API_KEY"
-            },
-            {
-              "value": "anthropic/claude-3-5-sonnet-20240620",
-              "variables": "ANTHROPIC_API_KEY"
-            },
-            {
-              "value": "anthropic/claude-3-haiku-20240307",
-              "variables": "ANTHROPIC_API_KEY"
-            },
-            {
-              "value": "anthropic/claude-3-opus-20240229",
-              "variables": "ANTHROPIC_API_KEY"
-            },
-            {
-              "value": "anthropic/claude-3-sonnet-20240229",
-              "variables": "ANTHROPIC_API_KEY"
-            },
-            {
-              "value": "anthropic/claude-instant-1.2",
-              "variables": "ANTHROPIC_API_KEY"
-            },
-            {
-              "value": "openai/gpt-3.5-turbo",
-              "variables": "OPENAI_API_KEY"
-            },
-            {
-              "value": "openai/gpt-3.5-turbo-0125",
-              "variables": "OPENAI_API_KEY"
-            },
-            {
-              "value": "openai/gpt-3.5-turbo-0301",
-              "variables": "OPENAI_API_KEY"
-            },
-            {
-              "value": "openai/gpt-3.5-turbo-0613",
-              "variables": "OPENAI_API_KEY"
-            },
-            {
-              "value": "openai/gpt-3.5-turbo-1106",
-              "variables": "OPENAI_API_KEY"
-            },
-            {
-              "value": "openai/gpt-3.5-turbo-16k",
-              "variables": "OPENAI_API_KEY"
-            },
-            {
-              "value": "openai/gpt-3.5-turbo-16k-0613",
-              "variables": "OPENAI_API_KEY"
-            },
-            {
-              "value": "openai/gpt-4",
-              "variables": "OPENAI_API_KEY"
-            },
-            {
-              "value": "openai/gpt-4-0125-preview",
-              "variables": "OPENAI_API_KEY"
-            },
-            {
-              "value": "openai/gpt-4-0314",
-              "variables": "OPENAI_API_KEY"
-            },
-            {
-              "value": "openai/gpt-4-0613",
-              "variables": "OPENAI_API_KEY"
-            },
-            {
-              "value": "openai/gpt-4-1106-preview",
-              "variables": "OPENAI_API_KEY"
-            },
-            {
-              "value": "openai/gpt-4-32k",
-              "variables": "OPENAI_API_KEY"
-            },
-            {
-              "value": "openai/gpt-4-32k-0314",
-              "variables": "OPENAI_API_KEY"
-            },
-            {
-              "value": "openai/gpt-4-32k-0613",
-              "variables": "OPENAI_API_KEY"
-            },
-            {
-              "value": "openai/gpt-4-turbo",
-              "variables": "OPENAI_API_KEY"
-            },
-            {
-              "value": "openai/gpt-4-turbo-preview",
-              "variables": "OPENAI_API_KEY"
-            },
-            {
-              "value": "openai/gpt-4-vision-preview",
-              "variables": "OPENAI_API_KEY"
-            },
-            {
-              "value": "openai/gpt-4o",
-              "variables": "OPENAI_API_KEY"
-            },
-            {
-              "value": "openai/gpt-4o-mini",
-              "variables": "OPENAI_API_KEY"
-            }
-          ]
-        }
-      },
-      "environment": [
-        "TAVILY_API_KEY"
-      ]
-    }
-  }
-}
--->
+The migration from `RunnableConfig` → `Runtime[Context]` represents LangGraph's evolution toward stronger typing and better developer experience. Note that while this repository uses Pydantic for context schemas, you can use TypedDict, dataclass, or any typed class.
